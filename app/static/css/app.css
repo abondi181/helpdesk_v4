@@ -1,0 +1,9 @@
+/* Дополнительные стили поверх Tailwind CDN */
+
+.tab-button {
+    @apply px-3 py-2 text-xs font-medium text-slate-600 border-b-2 border-transparent;
+}
+.tab-button.active {
+    @apply border-blue-500 text-blue-600 bg-blue-50;
+}
+

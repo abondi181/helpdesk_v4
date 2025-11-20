@@ -1,0 +1,133 @@
+<div id="taskModalBackdrop"
+     class="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-40 hidden">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="px-4 py-3 border-b flex items-center justify-between">
+            <div>
+                <div id="taskModalTitle" class="text-sm uppercase tracking-wide text-slate-500">
+                    Задача
+                </div>
+            </div>
+            <button type="button"
+                    class="p-2 rounded-full hover:bg-slate-100"
+                    onclick="closeTaskModal()">
+                ✕
+            </button>
+        </div>
+
+        <form id="taskModalForm" method="post" action="{{ url_for('tasks_views.create_task') }}"
+              class="flex-1 flex flex-col overflow-hidden">
+            <input type="hidden" name="task_id" id="taskModalId">
+
+            <div class="flex border-b text-sm">
+                <button type="button"
+                        class="tab-button active px-4 py-2"
+                        data-tab="main">Основное</button>
+
+                <button type="button"
+                        class="tab-button px-4 py-2"
+                        data-tab="comments">Комментарии</button>
+
+                <button type="button"
+                        class="tab-button px-4 py-2"
+                        data-tab="log">История</button>
+            </div>
+
+
+            <div class="flex-1 overflow-y-auto">
+                <div class="tab-panel p-4" data-tab-panel="main">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="md:col-span-2">
+                            <label class="block text-xs text-slate-500 mb-1">Название</label>
+                            <input type="text" name="title" id="taskTitle" required
+                                   class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring focus:ring-blue-300"
+                                   required>
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-xs text-slate-500 mb-1">Описание</label>
+                            <textarea name="description" id="taskDescription" required rows="3"
+                                      class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring focus:ring-blue-300"></textarea>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs text-slate-500 mb-1">Отдел</label>
+                            <input type="text" name="department" id="taskDepartment" required
+                                   class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring focus:ring-blue-300">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs text-slate-500 mb-1">Исполнитель</label>
+                            <select name="assigned_to" id="taskAssignedTo" required
+                                    class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring focus:ring-blue-300">
+                                <option value="">— выберите —</option>
+                                {% for u in users %}
+                                    <option value="{{ u.id }}">{{ u.full_name or u.username }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs text-slate-500 mb-1">Статус</label>
+                            <select name="status" id="taskStatus"
+                                    class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring focus:ring-blue-300">
+                                {% for s in TASK_STATUSES %}
+                                    <option value="{{ s }}">{{ s }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs text-slate-500 mb-1">Приоритет</label>
+                            <select name="priority" id="taskPriority"
+                                    class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring focus:ring-blue-300">
+                                {% for p in PRIORITIES %}
+                                    <option value="{{ p }}">{{ p }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-panel p-4 hidden" data-tab-panel="comments">
+                    <div id="taskComments" class="space-y-3 text-sm">
+                        <div class="text-slate-400 text-xs">Комментариев пока нет</div>
+                    </div>
+                    <div class="mt-3">
+                        <label class="block text-xs text-slate-500 mb-1">Новый комментарий</label>
+                        <textarea id="taskNewComment" rows="2"
+                                class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring focus:ring-blue-300"></textarea>
+                        <button type="button"
+                                class="mt-2 px-3 py-1.5 rounded-full text-sm bg-blue-600 text-white hover:bg-blue-700"
+                                onclick="submitComment()">
+                            Добавить комментарий
+                        </button>
+                    </div>
+                </div>
+
+
+                <div class="tab-panel p-4 hidden" data-tab-panel="log">
+                    <div id="taskLog" class="space-y-2 text-xs text-slate-600">
+                        <div class="text-slate-400 text-xs">История изменений появится после сохранения задачи</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="px-4 py-3 border-t flex items-center justify-between">
+                <div class="text-xs text-slate-400">
+                    Поля с * обязательны для заполнения
+                </div>
+                <div class="flex gap-2">
+                    <button type="button"
+                            class="px-3 py-1.5 rounded-full text-sm bg-slate-100 hover:bg-slate-200"
+                            onclick="closeTaskModal()">
+                        Отмена
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-1.5 rounded-full text-sm bg-blue-600 text-white hover:bg-blue-700">
+                        Сохранить
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

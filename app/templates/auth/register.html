@@ -1,0 +1,44 @@
+{% extends "layout/base.html" %}
+{% block title %}Регистрация{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto bg-white rounded-2xl shadow p-6">
+    <h1 class="text-xl font-semibold mb-4">Регистрация</h1>
+
+    <form method="post" class="space-y-4">
+
+        <div>
+            <label class="block text-sm mb-1">Email *</label>
+            <input type="email" name="email" class="w-full border rounded-lg px-3 py-2" required>
+        </div>
+
+        <div>
+            <label class="block text-sm mb-1">Полное имя</label>
+            <input type="text" name="full_name" class="w-full border rounded-lg px-3 py-2">
+        </div>
+
+        <div>
+            <label class="block text-sm mb-1">Пароль *</label>
+            <input type="password" name="password" class="w-full border rounded-lg px-3 py-2" required>
+        </div>
+
+        <div>
+            <label class="block text-sm mb-1">Повторите пароль *</label>
+            <input type="password" name="password2" class="w-full border rounded-lg px-3 py-2" required>
+        </div>
+
+        <div class="flex justify-end pt-3">
+            <button type="submit"
+                    class="px-4 py-2 bg-blue-600 text-white rounded-full text-sm hover:bg-blue-700">
+                Зарегистрироваться
+            </button>
+        </div>
+
+        <p class="text-sm mt-3">
+            Уже есть аккаунт?
+            <a href="{{ url_for('auth.login') }}" class="text-blue-600 hover:underline">Войти</a>
+        </p>
+
+    </form>
+</div>
+{% endblock %}

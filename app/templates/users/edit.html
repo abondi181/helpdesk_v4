@@ -1,0 +1,54 @@
+{% extends "layout/base.html" %}
+{% block title %}Редактирование пользователя{% endblock %}
+
+{% block content %}
+<div class="max-w-lg bg-white mx-auto rounded-2xl shadow p-6">
+
+    <h1 class="text-xl font-semibold mb-4">Редактирование</h1>
+
+    <form method="post" class="space-y-4">
+
+        <div>
+            <label class="block text-sm mb-1">Email</label>
+            <input class="w-full border rounded-lg px-3 py-2 bg-slate-100" value="{{ user.username }}" disabled>
+        </div>
+
+        <div>
+            <label class="block text-sm mb-1">Полное имя</label>
+            <input name="full_name" class="w-full border rounded-lg px-3 py-2"
+                   value="{{ user.full_name }}">
+        </div>
+
+        <div>
+            <label class="block text-sm mb-1">Роль</label>
+            <select name="role" class="w-full border rounded-lg px-3 py-2">
+                {% for r in ROLES %}
+                    <option value="{{ r }}" {% if r == user.role %}selected{% endif %}>
+                        {{ r }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label class="block text-sm mb-1">Отдел</label>
+            <input name="department" class="w-full border rounded-lg px-3 py-2"
+                   value="{{ user.department or '' }}">
+        </div>
+
+        <div class="flex items-center gap-2 pt-2">
+            <input type="checkbox" name="active" value="1"
+                   {% if user.is_active_flag %}checked{% endif %}>
+            <span class="text-sm">Активен</span>
+        </div>
+
+        <div class="flex justify-end pt-3">
+            <button class="px-4 py-2 rounded-full bg-blue-600 text-white text-sm hover:bg-blue-700">
+                Сохранить
+            </button>
+        </div>
+
+    </form>
+
+</div>
+{% endblock %}
