@@ -1,3 +1,4 @@
+
 function openTaskModal(taskId = null) {
     const backdrop = document.getElementById("taskModalBackdrop");
     const form = document.getElementById("taskModalForm");
@@ -21,6 +22,23 @@ function openTaskModal(taskId = null) {
                 document.getElementById("taskAssignedTo").value = task.assigned_to;
                 document.getElementById("taskStatus").value = task.status;
                 document.getElementById("taskPriority").value = task.priority;
+
+                const perms = task.permissions || {};
+
+                // Основные поля (название, описание, отдел, исполнитель)
+                setFieldEditable("taskTitle",       !!perms.can_edit);
+                setFieldEditable("taskDescription", !!perms.can_edit);
+                setFieldEditable("taskDepartment",  !!perms.can_edit);
+                setFieldEditable("taskAssignedTo",  !!perms.can_edit);
+
+                // Приоритет и срок — по своим правам
+                setFieldEditable("taskPriority", !!perms.can_change_priority);
+                
+
+
+                // Статус — по праву на статус
+                setFieldEditable("taskStatus", !!perms.can_change_status);
+
 
                 // Комментарии
                 const commentsBlock = document.getElementById("taskComments");
@@ -141,3 +159,38 @@ function submitComment() {
     });
 }
 
+function setFieldEditable(id, canEdit) {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    // Снимаем старые ограничения
+    el.removeAttribute("readonly");
+    el.removeAttribute("disabled");
+    el.classList.remove("bg-slate-100", "cursor-not-allowed");
+
+    if (!canEdit) {
+        // Запрещаем редактировать
+        if (el.tagName === "INPUT" || el.tagName === "TEXTAREA") {
+            el.setAttribute("readonly", "readonly");
+        } else {
+            el.setAttribute("disabled", "disabled");
+        }
+        // Внешний вид "статичный"
+        el.classList.add("bg-slate-100", "cursor-not-allowed");
+    }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const statusEl = document.getElementById("taskStatus");
+    const dueDateEl = document.getElementById("taskDueDate");
+
+    if (statusEl && dueDateEl) {
+        statusEl.addEventListener("change", () => {
+            if (statusEl.value === "Отложена") {
+                dueDateEl.classList.add("ring", "ring-orange-400");
+            } else {
+                dueDateEl.classList.remove("ring", "ring-orange-400");
+            }
+        });
+    }
+});

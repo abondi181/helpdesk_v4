@@ -10,6 +10,10 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     # Инициализация расширений
     db.init_app(app)
     login_manager.init_app(app)
+
+    from .extensions import migrate
+    migrate.init_app(app, db)
+
     socketio.init_app(app, async_mode="eventlet")
 
     @login_manager.user_loader

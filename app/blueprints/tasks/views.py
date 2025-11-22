@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 
 from flask import render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
@@ -6,9 +6,11 @@ from flask_login import login_required, current_user
 from ...extensions import db
 from ...models import Task, Comment, Log, User
 from ...core.constants import PRIORITIES, TASK_STATUSES
-from ...core.permissions import can_create_task, can_edit_task, can_change_status, can_change_priority
+from ...core.permissions import can_create_task, can_edit_task, can_change_status, can_change_priority, can_change_deadline
 from ...sockets import notify_task_changed
 from . import views_bp as bp
+
+
 
 
 @bp.route("/", methods=["GET"])
@@ -39,7 +41,9 @@ def list_tasks():
         status_filter=status_filter or "all",
         priority_filter=priority_filter or "all",
         can_create=can_create_task(current_user),
+        current_date=date.today(),
         today=date.today(),
+        
     )
 
 
@@ -84,44 +88,103 @@ def create_task():
 def update_task(task_id: int):
     task = Task.query.get_or_404(task_id)
 
-    if not can_edit_task(current_user, task):
-        flash("У вас нет прав для изменения задачи", "danger")
-        return redirect(url_for("tasks_views.list_tasks"))
-
     old_status = task.status
     old_priority = task.priority
     old_assigned_to = task.assigned_to_id
+    old_due_date = task.due_date
 
-    task.title = request.form.get("title", "").strip() or task.title
-    task.description = request.form.get("description", "").strip()
-    task.department = request.form.get("department") or None
+    # --- Основные поля (если есть права на редактирование) ---
+    if can_edit_task(current_user, task):
+        task.title = request.form.get("title", "").strip() or task.title
+        task.description = request.form.get("description", "").strip()
+        task.department = request.form.get("department") or None
 
+    # --- Новые значения из формы ---
     new_status = request.form.get("status") or task.status
     new_priority = request.form.get("priority") or task.priority
     new_assigned_to = request.form.get("assigned_to") or task.assigned_to_id
+    new_due_date_raw = request.form.get("due_date") or ""
+
+    # Парсим дату, если указана
+    new_due_date = old_due_date
+    if new_due_date_raw:
+        try:
+            new_due_date = datetime.strptime(new_due_date_raw, "%Y-%m-%d").date()
+        except ValueError:
+            flash("Некорректная дата", "danger")
+            return redirect(url_for("tasks_views.list_tasks"))
 
     logs_to_add = []
 
-    if new_status != old_status and can_change_status(current_user, task):
-        task.status = new_status
-        logs_to_add.append(Log(task_id=task.id, user_id=current_user.id, action="status", details=f"{old_status} → {new_status}"))
+    # --- Статус ---
+    if new_status != old_status:
+        # Проверяем права + допустимость перехода
+        if not can_change_status(current_user, task, new_status):
+            flash("Недопустимый переход статуса", "danger")
+            return redirect(url_for("tasks_views.list_tasks"))
 
+        # Доп. правило для "Отложена": дата обязательна
+        if new_status == "Отложена" and not new_due_date_raw:
+            flash("При выборе статуса 'Отложена' необходимо указать дату", "danger")
+            return redirect(url_for("tasks_views.list_tasks"))
+
+        task.status = new_status
+        logs_to_add.append(
+            Log(
+                task_id=task.id,
+                user_id=current_user.id,
+                action="status",
+                details=f"{old_status} → {new_status}",
+            )
+        )
+
+    # --- Приоритет ---
     if new_priority != old_priority and can_change_priority(current_user, task):
         task.priority = new_priority
-        logs_to_add.append(Log(task_id=task.id, user_id=current_user.id, action="priority", details=f"{old_priority} → {new_priority}"))
+        logs_to_add.append(
+            Log(
+                task_id=task.id,
+                user_id=current_user.id,
+                action="priority",
+                details=f"{old_priority} → {new_priority}",
+            )
+        )
 
+    # --- Исполнитель ---
     new_assigned_to_id = int(new_assigned_to)
     if new_assigned_to_id != old_assigned_to:
         task.assigned_to_id = new_assigned_to_id
-        logs_to_add.append(Log(task_id=task.id, user_id=current_user.id, action="delegate", details=f"Передано пользователю ID={new_assigned_to_id}"))
+        logs_to_add.append(
+            Log(
+                task_id=task.id,
+                user_id=current_user.id,
+                action="delegate",
+                details=f"Передано пользователю ID={new_assigned_to_id}",
+            )
+        )
 
-    db.session.add_all(logs_to_add)
+   # --- Дата (срок) ---
+    if new_due_date != old_due_date and can_change_deadline(current_user, task, new_status):
+        task.due_date = new_due_date
+        logs_to_add.append(
+            Log(
+                task_id=task.id,
+                user_id=current_user.id,
+                action="deadline",
+                details=f"{old_due_date} → {new_due_date}",
+            )
+        )
+
+    if logs_to_add:
+        db.session.add_all(logs_to_add)
     db.session.commit()
 
     notify_task_changed(task, "updated")
 
     flash("Задача обновлена", "success")
     return redirect(url_for("tasks_views.list_tasks"))
+
+
 
 
 @bp.route("/<int:task_id>/comment", methods=["POST"])

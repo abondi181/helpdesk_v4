@@ -4,6 +4,14 @@ from flask_login import login_required, current_user
 from ...models import Task
 from ...core.constants import TASK_STATUSES, PRIORITIES
 from . import api_bp as bp
+from ...core.permissions import (
+    can_edit_task,
+    can_change_status,
+    can_change_priority,
+    can_change_deadline,
+    
+)
+
 
 
 @bp.route("/", methods=["GET"])
@@ -71,6 +79,18 @@ def get_task(task_id):
             "created_at": lg.created_at.strftime("%Y-%m-%d %H:%M"),
         })
 
+        permissions = {
+        "can_edit": can_edit_task(current_user, task),
+        "can_change_status": can_change_status(current_user, task),
+        "can_change_priority": can_change_priority(current_user, task),
+        "can_change_deadline": can_change_deadline(current_user, task, task.status),
+
+        
+
+    }
+
+    
+    
     return jsonify({
         "id": task.id,
         "title": task.title,
@@ -84,4 +104,5 @@ def get_task(task_id):
         "due_date": task.due_date.isoformat() if task.due_date else None,
         "comments": comments,
         "logs": logs,
+        "permissions": permissions,
     })

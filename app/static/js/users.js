@@ -83,3 +83,14 @@ function closeUserDrawer() {
     const drawer = document.getElementById("userDrawer");
     drawer.classList.add("translate-x-full");
 }
+
+function deleteUser(id) {
+    if (!confirm("Удалить пользователя?")) return;
+
+    fetch(`/users/${id}/delete`, {
+        method: "POST"
+    }).then(r => r.json())
+      .then(j => {
+          if (j.status === "ok") location.reload();
+      });
+}

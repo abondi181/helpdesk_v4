@@ -27,3 +27,11 @@ TASK_STATUSES = [
     STATUS_ON_HOLD,
     STATUS_CLOSED,
 ]
+
+# Отделы
+DEPARTMENTS = [
+    "ИТ",
+    "Руководство",
+    "МО",
+    "АХД",
+]
